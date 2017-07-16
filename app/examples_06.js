@@ -1,23 +1,24 @@
 var mountains = require("./mountains");
 
-var protoRabbit = {
-    type: "proto",
-    speak: function (line) {
-        console.log("The " + this.type + " rabbit says '" + line + "'");
-        console.log(this);
-    }
+function Rabbit(type) {
+    this.type = type;
+}
+
+Rabbit.prototype.speak = function (line) {
+    console.log("The " + this.type + " rabbit says '" + line + "'");
 };
+Rabbit.prototype.teeth = "small";
 
-var whiteRabbit = Object.create(protoRabbit);
-whiteRabbit.type = "white";
-var fatRabbit = Object.create(protoRabbit);
-fatRabbit.type = "fat";
-var killerRabbit = Object.create(protoRabbit);
-killerRabbit.type = "killer";
+var whiteRabbit = new Rabbit("white");
+var fatRabbit = new Rabbit("fat");
+var killerRabbit = new Rabbit("killer");
+killerRabbit.teeth = "long, sharp, and bloody";
+var blackRabbit = new Rabbit("black");
 
-whiteRabbit.speak("Oh my ears and whiskers, how late it's getting!");
-fatRabbit.speak("I could sure use a carrot right now.");
-killerRabbit.speak("SKREEEE!");
+// whiteRabbit.speak("Oh my ears and whiskers, how late it's getting!");
+// fatRabbit.speak("I could sure use a carrot right now.");
+// killerRabbit.speak("SKREEEE!");
+// blackRabbit.speak("Doom...");
 
 
 function rowHeights(rows) {
@@ -85,6 +86,19 @@ TextCell.prototype.draw = function (width, height) {
     return result;
 };
 
+function RTextCell(text) {
+    TextCell.call(this, text);
+}
+RTextCell.prototype = Object.create(TextCell.prototype);
+RTextCell.prototype.draw = function (width, height) {
+    var result = [];
+    for (var i = 0; i < height; i++) {
+        var line = this.text[i] || "";
+        result.push(repeat(" ", width - line.length) + line);
+    }
+    return result;
+};
+
 function UnderlinedCell(inner) {
     this.inner = inner;
 }
@@ -106,13 +120,43 @@ function dataTable(data) {
     });
     var body = data.map(function (row) {
         return keys.map(function (name) {
-            return new TextCell(String(row[name]));
+            var value = row[name];
+            if (typeof value === "number") {
+                return new RTextCell(String(value));
+            } else {
+                return new TextCell(String(value));
+            }
         });
     });
     return [headers].concat(body);
 }
 
+function headlessDataTable(data) {
+    return data.map(function (row) {
+        return row.map(function (cell) {
+            return new TextCell(cell);
+        });
+    });
+}
+
+function generateChessboard(size) {
+    var rows = [];
+    for (var i = 0; i < size; i++) {
+        var row = [];
+        for (var j = 0; j < size; j++) {
+            if ((i + j) % 2 == 0) {
+                row.push("##");
+            } else {
+                row.push("");
+            }
+        }
+        rows.push(row);
+    }
+    return rows;
+}
+
 
 exports.printTable = function () {
+    // console.log(drawTable(headlessDataTable(generateChessboard(8))));
     console.log(drawTable(dataTable(mountains)));
 };
